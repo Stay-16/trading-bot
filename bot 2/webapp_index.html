@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotex AI Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="/webapp_bundle_20260329e.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="logo">
+        <span class="logo-dot"></span>
+        <div>
+          <strong>QUANTEX PRO</strong>
+          <small>Quotex AI command deck</small>
+        </div>
+      </div>
+      <span id="connectionBadge" class="status-pill loading">Connecting</span>
+      <div id="clock" class="clock-chip">--:--:--</div>
+      <div class="topbar-right">
+        <div class="top-chip">
+          <span>Updated</span>
+          <strong id="updatedAt">Waiting for data</strong>
+        </div>
+        <div id="balanceBadge" class="top-chip">Balance: --</div>
+        <button id="refreshButton" class="btn-sm">Refresh Deck</button>
+      </div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="side-block">
+        <div class="side-label">Workspace</div>
+        <div class="nav-item active">
+          <span class="nav-icon">LIVE</span>
+          <span>Execution Dashboard</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">AI</span>
+          <span>Layered Analysis</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">JR</span>
+          <span>Journal Feedback</span>
+        </div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-label">Filters</div>
+        <label class="field">
+          <span>Timeframe</span>
+          <select id="timeframeSelect" class="control">
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <select id="categorySelect" class="control">
+            <option value="all">All</option>
+            <option value="regular">FX</option>
+            <option value="otc">OTC</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Search Pair</span>
+          <input id="pairSearchInput" class="control" type="search" placeholder="EUR/USD or OTC">
+        </label>
+        <button id="scanButton" class="primary-button">Run Live Scanner</button>
+      </div>
+
+      <div class="side-block">
+        <div class="side-label">Execution Identity</div>
+        <label class="field">
+          <span>API Token</span>
+          <input id="apiTokenInput" class="control" type="text" placeholder="Enter API token">
+        </label>
+        <button id="saveApiTokenButton" class="btn-sm wide">Save Token</button>
+        <div id="apiTokenStatus" class="helper-copy">Set your API token once if your backend requires it.</div>
+        <label class="field">
+          <span>User ID</span>
+          <input id="userIdInput" class="control" type="number" min="1" step="1" placeholder="Enter user id">
+        </label>
+        <button id="saveUserIdButton" class="btn-sm wide">Save User</button>
+        <div id="userIdStatus" class="helper-copy">Set your user id once before opening trades.</div>
+      </div>
+
+      <div class="side-block system-block">
+        <div class="side-label">System Pulse</div>
+        <div class="system-stat">
+          <span>Visible markets</span>
+          <strong id="summaryMarketCount">--</strong>
+        </div>
+        <div class="system-stat">
+          <span>Selected pair</span>
+          <strong id="summarySelectedAsset">--</strong>
+        </div>
+        <div class="system-stat">
+          <span>Scanner status</span>
+          <strong id="summaryScannerStatus">Idle</strong>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section id="headlineSignal" class="headline-card neutral">
+        <div class="headline-copy">
+          <p class="headline-title">Awaiting Setup</p>
+          <h1>Select a live asset to inspect the full signal stack.</h1>
+          <div class="headline-strip">
+            <div class="headline-mini">
+              <span>Pair</span>
+              <strong id="headlinePair">--</strong>
+            </div>
+            <div class="headline-mini">
+              <span>Direction</span>
+              <strong id="headlineDirection">--</strong>
+            </div>
+            <div class="headline-mini">
+              <span>Bias</span>
+              <strong id="headlineBias">--</strong>
+            </div>
+            <div class="headline-mini">
+              <span>Risk</span>
+              <strong id="headlineRisk">--</strong>
+            </div>
+            <div class="headline-mini">
+              <span>Decision Score</span>
+              <strong id="headlineScore">--</strong>
+            </div>
+          </div>
+        </div>
+        <div class="hero-stack">
+          <div class="confidence-pill">
+            <span>Confidence</span>
+            <strong id="headlineConfidence">--</strong>
+          </div>
+          <div class="sentiment-card">
+            <div class="sentiment-header">
+              <span>Live Sentiment</span>
+              <strong id="sentimentValue">--%</strong>
+            </div>
+            <div id="sentimentLabel" class="sentiment-label">Loading</div>
+            <div class="scale-track">
+              <div id="sentimentMeter" class="scale-fill"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="metrics-row">
+        <article class="metric-card green">
+          <div class="m-label">Win Rate</div>
+          <div id="topMetricWinRate" class="m-val green">--</div>
+          <div class="m-sub">Journal performance</div>
+        </article>
+        <article class="metric-card blue">
+          <div class="m-label">Tracked Trades</div>
+          <div id="topMetricTrades" class="m-val blue">--</div>
+          <div class="m-sub">Closed trades in history</div>
+        </article>
+        <article class="metric-card green">
+          <div class="m-label">Net Profit</div>
+          <div id="topMetricProfit" class="m-val white">$0.00</div>
+          <div class="m-sub">Journal net result</div>
+        </article>
+        <article class="metric-card purple">
+          <div class="m-label">AI Confidence</div>
+          <div id="topMetricConfidence" class="m-val white">--</div>
+          <div class="m-sub">Current selected setup</div>
+        </article>
+      </section>
+
+      <section class="row2">
+        <article class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Session Micro Candles</div>
+              <div id="chartMeta" class="chart-subtitle">Collecting session price points</div>
+            </div>
+            <div class="chart-badge">LIVE</div>
+          </div>
+          <div id="miniChart" class="mini-chart"></div>
+          <div class="trade-actions">
+            <button id="tradeCallButton" class="trade-button call">Open CALL</button>
+            <button id="tradePutButton" class="trade-button put">Open PUT</button>
+            <div id="tradeStatus" class="trade-status">Select an analyzed setup to unlock direct execution.</div>
+          </div>
+        </article>
+
+        <article class="signals-card">
+          <div class="dd-header">
+            <div class="chart-title">Top Signals Now</div>
+            <div class="mini-note">Scanner-ranked setups</div>
+          </div>
+          <div id="topSetups" class="signal-stack loading-state">Scanner results will appear here.</div>
+        </article>
+      </section>
+
+      <section class="row3">
+        <article class="intel-panel">
+          <div class="dd-header">
+            <div>
+              <div class="chart-title">Signal Details</div>
+              <div id="detailMethod" class="mini-note">No asset selected</div>
+            </div>
+          </div>
+          <div id="analysisCards" class="analysis-cards">
+            <div class="empty-card">Choose an asset from the live board to open the detailed analysis.</div>
+          </div>
+          <div class="subsection-head">
+            <span>Live Analysis Flow</span>
+          </div>
+          <div id="liveAnalysisFlow" class="live-analysis-flow">
+            <div class="empty-card">The live analysis flow will appear here after you choose a pair.</div>
+          </div>
+        </article>
+
+        <article class="ai-card">
+          <div class="dd-header">
+            <div class="chart-title">AI Engine Status</div>
+            <div class="mini-note">Weighted engine output</div>
+          </div>
+          <div id="journalAnalytics" class="journal-analytics">
+            <div class="empty-card">Journal analytics will appear after closed trades start accumulating.</div>
+          </div>
+          <div class="subsection-head">
+            <span>Decision Reasons</span>
+          </div>
+          <div id="decisionReasons" class="reason-list">
+            <div class="empty-card">The engine reasons will appear here after running an analysis.</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="bottom-row">
+        <article class="journal-card">
+          <div class="dd-header">
+            <div class="chart-title">Trade Journal</div>
+            <div class="mini-note">Closed trades and feedback</div>
+          </div>
+          <div id="tradeJournal" class="journal-list">
+            <div class="empty-card">Closed trades will appear here after the first completed result.</div>
+          </div>
+        </article>
+
+        <article class="market-panel">
+          <div class="dd-header">
+            <div class="chart-title">Live Market Board</div>
+            <div class="mini-note">Selectable live assets</div>
+          </div>
+          <div id="marketBoard" class="market-list loading-state">Loading live assets...</div>
+        </article>
+
+        <article class="live-feed">
+          <div class="dd-header">
+            <div class="chart-title">System Feed</div>
+            <div class="mini-note">Recent dashboard events</div>
+          </div>
+          <div id="systemFeed" class="feed-list">
+            <div class="empty-card">System events will appear here as the dashboard updates.</div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/webapp_bundle_20260329e.js"></script>
+</body>
+</html>
