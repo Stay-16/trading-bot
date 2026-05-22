@@ -1,6 +1,0 @@
-{
-  "random_forest": 1.0,
-  "extra_trees": 1.0,
-  "gradient_boosting": 1.0,
-  "xgboost": 1.0
-}
