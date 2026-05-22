@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    container_name: tradingbot-core
+    command: python main.py
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./session.json:/app/session.json
+      - ./.env:/app/.env
+    restart: unless-stopped
+    network_mode: host
+
+  webapp:
+    build: .
+    container_name: tradingbot-webapp
+    command: python run_webapp.py
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./session.json:/app/session.json
+      - ./.env:/app/.env
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    depends_on:
+      - bot

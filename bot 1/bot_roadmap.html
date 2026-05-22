@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بوت التداول الذكي — الخارطة الكاملة</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: #0f0f1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #1a1a2e; }
+  ::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 4px; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f0f1a 100%);
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .hero h1 {
+    font-size: 2.8em;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .hero p { color: #888; font-size: 1.1em; }
+
+  /* Stats bar */
+  .stats {
+    display: flex; justify-content: center; gap: 30px;
+    padding: 20px; flex-wrap: wrap;
+    background: #141428;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  .stat { text-align: center; }
+  .stat .num { font-size: 1.8em; font-weight: 900; color: #00d2ff; }
+  .stat .lbl { font-size: 0.8em; color: #888; }
+
+  /* Container */
+  .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+
+  /* Phase */
+  .phase {
+    background: #1a1a2e;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    padding: 30px;
+    border-left: 4px solid #7b2ff7;
+    transition: transform 0.2s;
+  }
+  .phase:hover { transform: translateX(-4px); }
+  .phase h2 {
+    font-size: 1.4em;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .phase .badge {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.6em;
+    font-weight: 700;
+  }
+  .badge-done { background: #1b5e20; color: #a5d6a7; }
+  .badge-new { background: #e65100; color: #ffcc80; }
+  .phase .subtitle { color: #888; font-size: 0.9em; margin-bottom: 16px; }
+  .phase ul { list-style: none; }
+  .phase li {
+    padding: 6px 0;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.95em;
+  }
+  .phase li::before { content: "▸"; color: #7b2ff7; font-weight: 700; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 1.8em; }
+  }
+
+  /* Card */
+  .card {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #2a2a4a;
+  }
+  .card h3 {
+    font-size: 1em;
+    color: #00d2ff;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 8px;
+    padding: 30px 0;
+  }
+  .flow-step {
+    background: linear-gradient(135deg, #1a1a3e, #2a2a5e);
+    border: 1px solid #3a3a6a;
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 110px;
+    font-size: 0.85em;
+  }
+  .flow-step .num {
+    display: block;
+    font-size: 0.7em;
+    color: #7b2ff7;
+    font-weight: 700;
+  }
+  .flow-step .title {
+    display: block;
+    font-weight: 700;
+    margin: 4px 0;
+  }
+  .flow-step .desc {
+    display: block;
+    font-size: 0.75em;
+    color: #888;
+  }
+  .flow-arrow { color: #4a4a6a; font-size: 1.5em; }
+
+  /* Weight bar */
+  .weight-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+    background: #2a2a4a;
+    overflow: hidden;
+  }
+  .weight-bar .fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+
+  .section-title {
+    font-size: 1.6em;
+    font-weight: 700;
+    margin: 40px 0 20px;
+    text-align: center;
+    color: #00d2ff;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    font-weight: 600;
+  }
+  .tag-green { background: #1b5e20; color: #a5d6a7; }
+  .tag-orange { background: #e65100; color: #ffcc80; }
+  .tag-blue { background: #0d47a1; color: #90caf9; }
+  .tag-purple { background: #4a148c; color: #ce93d8; }
+  .tag-red { background: #b71c1c; color: #ef9a9a; }
+
+  /* Config table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  th { color: #888; font-weight: 600; font-size: 0.8em; }
+  tr:hover td { background: #1a1a3e; }
+
+  .footer {
+    text-align: center;
+    padding: 40px;
+    color: #555;
+    font-size: 0.85em;
+    border-top: 1px solid #2a2a4a;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🤖 بوت التداول الذكي</h1>
+  <p>خارطة الطريق الكاملة — 5 أبعاد للتحليل + 7 مصادر قرار + Gemini AI</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="num">7</div><div class="lbl">مصادر قرار</div></div>
+  <div class="stat"><div class="num">16</div><div class="lbl">مؤشر فني</div></div>
+  <div class="stat"><div class="num">76</div><div class="lbl">زوج مدعوم</div></div>
+  <div class="stat"><div class="num">5</div><div class="lbl">مراحل تحليل</div></div>
+  <div class="stat"><div class="num">14</div><div class="lbl">مكوّن Confluence</div></div>
+</div>
+
+<div class="container">
+
+  <!-- ═══════════ الدورة الخماسية ═══════════ -->
+  <div class="section-title">🔄 الدورة الخماسية — Gemini AI</div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <span class="num">الخطوة 1</span>
+      <span class="title">📊 رصد الفرصة</span>
+      <span class="desc">ConfluenceEngine (14 مؤشر)</span>
+    </div>
+    <span class="flow-arrow">⏺</span>
+    <div class="flow-step">
+      <span class="num">الخطوة 2</span>
+      <span class="title">📸 توليد الشارت</span>
+      <span class="desc">mplfinance + BB + EMAs</span>
+    </div>
+    <span class="flow-arrow">⏺</span>
+    <div class="flow-step">
+      <span class="num">الخطوة 3</span>
+      <span class="title">📡 إرسال لـ Gemini</span>
+      <span class="desc">صورة + تقرير فني</span>
+    </div>
+    <span class="flow-arrow">⏺</span>
+    <div class="flow-step">
+      <span class="num">الخطوة 4</span>
+      <span class="title">🧠 تحليل مزدوج</span>
+      <span class="desc">بصري + رقمي</span>
+    </div>
+    <span class="flow-arrow">⏺</span>
+    <div class="flow-step" style="border-color:#4CAF50;">
+      <span class="num">الخطوة 5</span>
+      <span class="title">🚀 قرار نهائي</span>
+      <span class="desc">CONFIRMED / CANCEL</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ PHASES ═══════════ -->
+  <div class="section-title">📌 مراحل التطوير</div>
+
+  <div class="phase">
+    <h2>
+      <span>🧱 المرحلة 0 — البنية التحتية</span>
+      <span class="badge badge-done">مكتمل</span>
+    </h2>
+    <div class="subtitle">النواة الأساسية للبوت</div>
+    <ul>
+      <li>اتصال Telegram + Quotex</li>
+      <li>ConfluenceEngine (14 مكوّن)</li>
+      <li>Signal dataclass + Candle</li>
+      <li>DataPipeline مع Polling</li>
+      <li>TradeManager + قاعدة بيانات SQLite</li>
+      <li>WebApp (FastAPI + LightweightCharts)</li>
+      <li>76 زوج في pairs_registry</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h2>
+      <span>🔗 المرحلة 1 — دمج bot2 (7 مصادر)</span>
+      <span class="badge badge-done">مكتمل</span>
+    </h2>
+    <div class="subtitle">WeightedDecisionEngine — 7 أصوات بأوزان مختلفة</div>
+    <div style="margin:12px 0;">
+      <div><span>confluence_engine</span> <span style="float:left;color:#00d2ff;">25%</span><div class="weight-bar"><div class="fill" style="width:25%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>ai_model</span> <span style="float:left;color:#00d2ff;">18%</span><div class="weight-bar"><div class="fill" style="width:18%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>traditional (TV)</span> <span style="float:left;color:#00d2ff;">18%</span><div class="weight-bar"><div class="fill" style="width:18%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>lstm</span> <span style="float:left;color:#00d2ff;">15%</span><div class="weight-bar"><div class="fill" style="width:15%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>trend_filter</span> <span style="float:left;color:#00d2ff;">12%</span><div class="weight-bar"><div class="fill" style="width:12%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>volatility_filter</span> <span style="float:left;color:#00d2ff;">7%</span><div class="weight-bar"><div class="fill" style="width:7%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+      <div><span>candle_pattern</span> <span style="float:left;color:#00d2ff;">5%</span><div class="weight-bar"><div class="fill" style="width:5%;background:linear-gradient(90deg,#7b2ff7,#00d2ff);"></div></div></div>
+    </div>
+    <ul>
+      <li>FusedRiskManager (Kelly + drawdown + cons loss)</li>
+      <li>AutoExecuteGate (4 gates)</li>
+      <li>AdaptiveThresholds حسب حالة السوق</li>
+      <li>PortfolioManager + SelfOptimizer</li>
+      <li>DBReporter + PairScanner</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h2>
+      <span>🧪 المرحلة 2 — المؤشرات + Market Regime</span>
+      <span class="badge badge-done">مكتمل</span>
+    </h2>
+    <div class="subtitle">مكتبة مؤشرات جديدة + فلتر حالة السوق</div>
+    <ul>
+      <li><span class="tag tag-green">جديد</span> indicators_library.py — RSI, ATR, ADX, Ichimoku, OBV, Volume Profile</li>
+      <li><span class="tag tag-green">جديد</span> market_regime.py — ADX-based regime (trending/ranging/volatile) + auto-strategy</li>
+      <li>Ichimoku Cloud (Tenkan/Kijun/Senkou/Chikou)</li>
+      <li>ADX + DI± لتحديد قوة الاتجاه</li>
+      <li>Volume Profile (POC/VAH/VAL)</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h2>
+      <span>📈 المرحلة 3 — Backtesting</span>
+      <span class="badge badge-done">مكتمل</span>
+    </h2>
+    <div class="subtitle">محاكاة تاريخية كاملة مع مقاييس احترافية</div>
+    <ul>
+      <li><span class="tag tag-green">جديد</span> backtesting.py — BacktestingEngine + BacktestResult</li>
+      <li>Sharpe Ratio + Sortino Ratio</li>
+      <li>Maximum Drawdown</li>
+      <li>Win Rate + Profit Factor + Expectancy</li>
+      <li>أمر /backtest في التلغرام</li>
+    </ul>
+  </div>
+
+  <div class="phase">
+    <h2>
+      <span>🔄 المرحلة 4 — يدوي فقط + WAIT fix</span>
+      <span class="badge badge-done">مكتمل</span>
+    </h2>
+    <div class="subtitle">إزالة الإشارات التلقائية + إصلاح WAIT</div>
+    <ul>
+      <li>إزالة pipeline on_signal callback</li>
+      <li>إشارات يدوية فقط (confirm_start + Next Signal)</li>
+      <li>WAIT signals ترسل رسالة نصية (بدون صورة)</li>
+      <li>"🔄 Next Signal!" زر مع MarketRegimeFilter</li>
+    </ul>
+  </div>
+
+  <div class="phase" style="border-left-color:#00d2ff;">
+    <h2>
+      <span>🤖 المرحلة 5 — Gemini AI Vision</span>
+      <span class="badge badge-new">آخر إضافة</span>
+    </h2>
+    <div class="subtitle">تحليل بصري + رقمي — 5 أبعاد</div>
+    <ul>
+      <li><span class="tag tag-orange">جديد</span> gemini_verifier.py — توليد شارت + Gemini API</li>
+      <li>Chart generation باستخدام mplfinance (Bollinger, EMA9/21, Volume)</li>
+      <li>Gemini 2.5 Flash يفحص Price Action بصرياً</li>
+      <li>مطابقة رقمية + بصرية لتصفية الإشارات الكاذبة</li>
+      <li>CONFIRMED → ثقة ×1.05 | CANCEL → إلغاء مع سبب</li>
+      <li>إظهار حالة Gemini في صورة الإشارة</li>
+    </ul>
+  </div>
+
+  <!-- ═══════════ الإعدادات ═══════════ -->
+  <div class="section-title">⚙️ الإعدادات الكاملة</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>📊 التداول</h3>
+      <table>
+        <tr><td>Payout</td><td>88%</td></tr>
+        <tr><td>Balance</td><td>$1,000</td></tr>
+        <tr><td>Risk per trade</td><td>2%</td></tr>
+        <tr><td>Max daily loss</td><td>10%</td></tr>
+        <tr><td>Max cons. losses</td><td>3</td></tr>
+        <tr><td>Min trade</td><td>$1</td></tr>
+        <tr><td>Max trade</td><td>$200</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🤖 Gemini AI</h3>
+      <table>
+        <tr><td>Model</td><td>gemini-2.5-flash</td></tr>
+        <tr><td>Temperature</td><td>0.1</td></tr>
+        <tr><td>Max tokens</td><td>1024</td></tr>
+        <tr><td>Chart type</td><td>mplfinance (12×7)</td></tr>
+        <tr><td>قرار CONFIRMED</td><td>ثقة ×1.05</td></tr>
+        <tr><td>قرار CANCEL</td><td>إلغاء + سبب</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🛡️ Risk Manager</h3>
+      <table>
+        <tr><td>Kelly cap</td><td>25%</td></tr>
+        <tr><td>Max concurrent</td><td>3</td></tr>
+        <tr><td>Max exposure</td><td>30%</td></tr>
+        <tr><td>Loss mult 0</td><td>1.0×</td></tr>
+        <tr><td>Loss mult 1</td><td>0.5×</td></tr>
+        <tr><td>Loss mult 2</td><td>0.25×</td></tr>
+        <tr><td>Loss mult 3</td><td>0.0×</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🌍 Market Regime</h3>
+      <table>
+        <tr><td>ADX strong trend</td><td>≥40</td></tr>
+        <tr><td>ADX trending</td><td>25-39</td></tr>
+        <tr><td>ATR volatile</td><td>≥1.5%</td></tr>
+        <tr><td>ADX ranging</td><td><20</td></tr>
+        <tr><td>Conf adj strong</td><td>+10</td></tr>
+        <tr><td>Conf adj trending</td><td>+5</td></tr>
+        <tr><td>Conf adj volatile</td><td>-10</td></tr>
+        <tr><td>Conf adj ranging</td><td>-5</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ المؤشرات ═══════════ -->
+  <div class="section-title">📐 مؤشرات ConfluenceEngine</div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>📈 TrendEngine</h3>
+      <table>
+        <tr><td>ADX period</td><td>14</td></tr>
+        <tr><td>EMA fast/slow</td><td>9 / 21</td></tr>
+        <tr><td>BB period/std</td><td>20 / 2.0</td></tr>
+        <tr><td>MACD</td><td>12/26/9</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>📉 Momentum</h3>
+      <table>
+        <tr><td>RSI period</td><td>14</td></tr>
+        <tr><td>Stoch K/D</td><td>14 / 3</td></tr>
+        <tr><td>ROC period</td><td>10</td></tr>
+        <tr><td>RSI overbought</td><td>>70</td></tr>
+        <tr><td>RSI oversold</td><td><30</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🔮 Ichimoku</h3>
+      <table>
+        <tr><td>Tenkan</td><td>9</td></tr>
+        <tr><td>Kijun</td><td>26</td></tr>
+        <tr><td>Senkou B</td><td>52</td></tr>
+        <tr><td>Displacement</td><td>26</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>📊 Dynamic S/R</h3>
+      <table>
+        <tr><td>Lookback</td><td>50</td></tr>
+        <tr><td>Tolerance</td><td>0.1%</td></tr>
+        <tr><td>Strong zone</td><td>≥4 touches</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🌊 Divergence</h3>
+      <table>
+        <tr><td>Lookback</td><td>30</td></tr>
+        <tr><td>RSI period</td><td>14</td></tr>
+        <tr><td>Bearish RSI</td><td>>70</td></tr>
+        <tr><td>Bullish RSI</td><td><30</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>📦 Volume/Market</h3>
+      <table>
+        <tr><td>Volume MA</td><td>20</td></tr>
+        <tr><td>Conf. ratio</td><td>>1.5×</td></tr>
+        <tr><td>OB lookback</td><td>30</td></tr>
+        <tr><td>Struct. lookback</td><td>20</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ الملفات ═══════════ -->
+  <div class="section-title">📁 هيكل الملفات</div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>⚡ Core</h3>
+      <table>
+        <tr><td>main.py</td><td>BotCore + Telegram handlers</td></tr>
+        <tr><td>bot_algorithms.py</td><td>ConfluenceEngine (16 class)</td></tr>
+        <tr><td>data_layer.py</td><td>DataPipeline + Quotex</td></tr>
+        <tr><td>trade_executor.py</td><td>TradeManager + DB</td></tr>
+        <tr><td>ui.py</td><td>Telegram UI</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🧠 AI + Vision</h3>
+      <table>
+        <tr><td>gemini_verifier.py</td><td class="tag tag-orange">جديد</td></tr>
+        <tr><td>advanced_ai.py</td><td>ML + LSTM</td></tr>
+        <tr><td>market_regime.py</td><td class="tag tag-green">جديد</td></tr>
+        <tr><td>indicators_library.py</td><td class="tag tag-green">جديد</td></tr>
+        <tr><td>backtesting.py</td><td class="tag tag-green">جديد</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🔗 Shared</h3>
+      <table>
+        <tr><td>decision_engine.py</td><td>7 مصادر + أوزان</td></tr>
+        <tr><td>risk_manager.py</td><td>Kelly + drawdown</td></tr>
+        <tr><td>unified_signal.py</td><td>SignalPackage</td></tr>
+        <tr><td>auto_executor.py</td><td>4 Gates</td></tr>
+        <tr><td>asset_mapping.py</td><td>ربط الأزواج</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>🌐 WebApp</h3>
+      <table>
+        <tr><td>webapp_server.py</td><td>FastAPI + WebSocket</td></tr>
+        <tr><td>webapp_index.html</td><td>Frontend chart UI</td></tr>
+        <tr><td>api_schemas.py</td><td>Pydantic models</td></tr>
+        <tr><td>run_webapp.py</td><td>مشغل منفصل</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════ إحصائيات ═══════════ -->
+  <div class="section-title">📊 إحصائيات الكود</div>
+  <div class="grid-3" style="margin-bottom:40px;">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">34</div>
+      <div style="color:#888;">ملف Python</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">16</div>
+      <div style="color:#888;">مؤشر فني</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">76</div>
+      <div style="color:#888;">زوج تداول</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">7</div>
+      <div style="color:#888;">مصادر قرار</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">5</div>
+      <div style="color:#888;">مراحل تحليل Gemini</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div style="font-size:2.5em;font-weight:900;color:#00d2ff;">49/49</div>
+      <div style="color:#888;">اختبارات اجتازت</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  تم الإنشاء في 22 مايو 2026 — جميع الحقوق محفوظة
+</div>
+
+</body>
+</html>

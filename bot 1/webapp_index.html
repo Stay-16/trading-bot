@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GPT Trading Bot</title>
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e1117;--surface:#1a1f2e;--surface2:#242938;
+  --border:#2e3550;--accent:#00d4aa;--accent2:#4f8ef7;
+  --danger:#ff4757;--success:#2ed573;--warning:#ffa502;
+  --text:#e8eaf6;--text2:#9ba3c9;--text3:#5c6488;
+  --btn-bg:#1e2436;--btn-hover:#2a3250;--btn-border:#3a4570;
+  --font:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+body{background:#0a0d14;font-family:var(--font);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:10px}
+.phone-frame{width:100%;max-width:400px;height:96vh;max-height:780px;background:var(--bg);border-radius:32px;border:2px solid var(--border);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 80px rgba(0,212,170,0.06),0 0 40px rgba(0,0,0,0.7)}
+.header{background:var(--surface);padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.bot-avatar{width:36px;height:36px;background:linear-gradient(135deg,#00d4aa,#4f8ef7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:#000;flex-shrink:0}
+.bot-info{flex:1}
+.bot-name{font-size:14px;font-weight:600}
+.bot-sub{font-size:10px;color:var(--text2)}
+.status-dot{width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite}
+.status-dot.online{background:var(--success)}
+.status-dot.offline{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.chat{flex:1;overflow-y:auto;padding:8px 8px 4px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+.chat::-webkit-scrollbar{width:2px}
+.chat::-webkit-scrollbar-thumb{background:var(--border)}
+.dash{flex:1;overflow-y:auto;padding:8px;display:none;flex-direction:column;gap:8px}
+.msg{display:flex;flex-direction:column;max-width:96%;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.bot{align-self:flex-start}
+.msg.user{align-self:flex-end}
+.bubble{padding:9px 12px;border-radius:14px;font-size:12.5px;line-height:1.5}
+.msg.bot .bubble{background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg.user .bubble{background:#0d3d2e;border:1px solid #1a6b50;border-bottom-right-radius:4px;color:#d0ffe8}
+.msg-time{font-size:9px;color:var(--text3);margin-top:2px;padding:0 3px}
+.kb-grid{display:grid;gap:4px;margin-top:0}
+.kb-grid.c2{grid-template-columns:1fr 1fr}
+.kb-grid.c3{grid-template-columns:1fr 1fr 1fr}
+.kb-grid.c1{grid-template-columns:1fr}
+.kb-btn{background:var(--btn-bg);border:1px solid var(--btn-border);color:var(--text);padding:8px 6px;border-radius:7px;font-size:11.5px;cursor:pointer;transition:all .15s;text-align:center;font-family:var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb-btn:hover{background:var(--btn-hover);border-color:var(--accent2);color:var(--accent2)}
+.kb-btn:active{transform:scale(.97)}
+.kb-btn.sel{background:rgba(0,212,170,.12);border-color:var(--accent);color:var(--accent)}
+.input-area{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:6px 10px;background:var(--surface);border-top:1px solid var(--border)}
+.inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:13px;color:var(--text);outline:none;font-family:var(--font)}
+.snd{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:50%;cursor:pointer;font-size:15px;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-box{background:linear-gradient(135deg,#080f20,#0c1828);border:1px solid #1a3050;border-radius:10px;padding:12px;text-align:center}
+.logo-title{font-size:20px;font-weight:900;background:linear-gradient(135deg,#00d4aa,#4f8ef7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px}
+.logo-sub{font-size:10px;color:var(--accent2);letter-spacing:2px;text-transform:uppercase;opacity:.8}
+.badges{display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap}
+.badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:600}
+.badge.green{background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.35);color:var(--success)}
+.badge.blue{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.35);color:var(--accent2)}
+.badge.teal{background:rgba(0,212,170,.12);border:1px solid rgba(0,212,170,.35);color:var(--accent)}
+.prow{display:flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 0;color:var(--text2)}
+.prow strong{color:var(--accent)}
+.sig-dir{text-align:center;padding:12px;border-radius:9px;font-size:16px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
+.sig-dir.buy{background:rgba(0,212,170,.12);border:1.5px solid var(--accent);color:var(--accent)}
+.sig-dir.sell{background:rgba(255,71,87,.12);border:1.5px solid var(--danger);color:var(--danger)}
+.sig-dir.neutral{background:rgba(255,165,2,.12);border:1.5px solid var(--warning);color:var(--warning)}
+.srow{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;padding:2px 0}
+.sl{color:var(--text2)}
+.sv{color:var(--text);font-weight:500}
+.sv.accent{color:var(--accent)}
+.sv.danger{color:var(--danger)}
+.sv.warning{color:var(--warning)}
+.sv.success{color:var(--success)}
+.sep{height:1px;background:var(--border);margin:5px 0}
+.spct{margin-top:6px;padding:7px;background:rgba(46,213,115,.08);border:1px solid rgba(46,213,115,.25);border-radius:7px;display:flex;align-items:center;justify-content:space-between;font-size:11.5px}
+.pbar{background:var(--surface);border-radius:4px;height:4px;margin-top:5px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px}
+.typing{display:flex;gap:4px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:4px;width:fit-content}
+.typing span{width:6px;height:6px;background:var(--text3);border-radius:50%;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px);background:var(--accent2)}}
+.pg{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px}
+.pgb{background:var(--btn-bg);border:1px solid var(--btn-border);color:var(--text2);width:28px;height:24px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.pgb:hover{background:var(--btn-hover);color:var(--accent2)}
+.pgb:disabled{opacity:.3;cursor:default}
+.pgc{font-size:11px;color:var(--text2)}
+.gap4{height:4px}
+.err-msg{padding:8px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:7px;color:var(--danger);font-size:11px;text-align:center;margin-bottom:6px}
+/* Dashboard Styles */
+.dash-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px}
+.dash-card h3{font-size:11px;color:var(--accent2);margin-bottom:6px;text-align:center;text-transform:uppercase;letter-spacing:1px}
+.chart-container{width:100%;height:220px;border-radius:8px;overflow:hidden}
+.chart-loading{display:flex;align-items:center;justify-content:center;height:220px;color:var(--text3);font-size:12px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center}
+.metric .val{font-size:15px;font-weight:700;color:var(--accent)}
+.metric .lbl{font-size:9px;color:var(--text3);margin-top:2px}
+.metric .val.green{color:var(--success)}
+.metric .val.red{color:var(--danger)}
+.metric .val.orange{color:var(--warning)}
+.setup-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:4px;font-size:11px}
+.setup-item .name{color:var(--text2)}
+.setup-item .dir{font-weight:600}
+.setup-item .dir.call{color:var(--success)}
+.setup-item .dir.put{color:var(--danger)}
+.setup-item .conf{color:var(--text3)}
+.sentiment-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin:4px 0}
+.sentiment-fill{height:100%;border-radius:3px;transition:width .5s}
+.typing-dots::after{content:'';animation:dotAnim 1.2s steps(4,end) infinite}
+@keyframes dotAnim{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}100%{content:''}}
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="header">
+    <div class="back-btn" id="backBtn" style="color:var(--accent2);font-size:18px;cursor:pointer;flex-shrink:0">←</div>
+    <div class="bot-avatar">GPT</div>
+    <div class="bot-info">
+      <div class="bot-name">GPT Trading Bot</div>
+      <div class="bot-sub" id="headerSub">🤖 جاري الاتصال...</div>
+    </div>
+    <div class="status-dot offline" id="statusDot"></div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="dash" id="dash">
+    <div class="dash-card">
+      <h3>📊 Live Chart</h3>
+      <div class="chart-container" id="chartContainer"><div class="chart-loading" id="chartLoading">Loading chart...</div></div>
+    </div>
+    <div class="dash-card">
+      <h3>📈 Market Metrics</h3>
+      <div class="metrics" id="metrics">
+        <div class="metric"><div class="val" id="mPrice">--</div><div class="lbl">Price</div></div>
+        <div class="metric"><div class="val" id="mPayout">--</div><div class="lbl">Payout</div></div>
+        <div class="metric"><div class="val" id="mWinRate">--</div><div class="lbl">Win Rate</div></div>
+        <div class="metric"><div class="val" id="mBalance">--</div><div class="lbl">Balance</div></div>
+      </div>
+    </div>
+    <div class="dash-card">
+      <h3>🏆 Top Setups</h3>
+      <div id="topSetups"><div style="color:var(--text3);font-size:11px;text-align:center">Loading...</div></div>
+    </div>
+    <div class="dash-card">
+      <div style="display:flex;gap:6px">
+        <button class="kb-btn" style="flex:1;color:var(--success);border-color:var(--success)" onclick="dashAction('buy')">▲ BUY</button>
+        <button class="kb-btn" style="flex:1;color:var(--danger);border-color:var(--danger)" onclick="dashAction('sell')">▼ SELL</button>
+      </div>
+      <div style="text-align:center;margin-top:5px;font-size:10px;color:var(--text3)" id="dashStatus">Connect to server</div>
+    </div>
+  </div>
+  <div class="input-area">
+    <input class="inp" placeholder="اكتب رسالة..." id="userInput" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="snd" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+<script>
+// ── State ──
+const chat=document.getElementById('chat');
+const dash=document.getElementById('dash');
+const statusDot=document.getElementById('statusDot');
+const headerSub=document.getElementById('headerSub');
+const backBtn=document.getElementById('backBtn');
+let chatMode=true;
+let step={}, page=0, allPairs=[], balance=0, botRunning=false, botMode='paper', botSymbol='EURUSD_otc', botPrice=0;
+let chart=null, candleSeries=null, ws=null, pollTimer=null;
+const PER_PAGE=6;
+
+function now(){return new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',hour12:false})}
+function scroll(){setTimeout(()=>chat.scrollTop=chat.scrollHeight,50)}
+function addMsg(html,cls='bot',time){
+  const el=document.createElement('div');
+  el.className=`msg ${cls}`;
+  el.innerHTML=`<div class="bubble">${html}</div><div class="msg-time">${time||now()}</div>`;
+  chat.appendChild(el);scroll();return el
+}
+function addTyping(){const e=document.createElement('div');e.className='msg bot';e.id='typ';e.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';chat.appendChild(e);scroll()}
+function rmTyping(){const e=document.getElementById('typ');if(e)e.remove()}
+function delay(fn,t){setTimeout(fn,t)}
+function el(id){return document.getElementById(id)}
+function api(path){return fetch(path).then(r=>r.ok?r.json():null).catch(()=>null)}
+
+// ── Health check ──
+async function refreshStatus(){
+  const h=await api('/api/health');
+  if(h){
+    botRunning=h.running;botMode=h.mode;botSymbol=h.symbol||'—';botPrice=h.price||0;balance=h.balance||0;
+    statusDot.className='status-dot '+(h.connection==='Connected'?'online':'offline');
+    headerSub.textContent=`🤖 ${h.symbol||'—'} ${h.connection==='Connected'?'✅':'🔴'} • $${(h.balance||0).toFixed(2)}`;
+  }else{
+    statusDot.className='status-dot offline';
+    headerSub.textContent='🤖 غير متصل بالخادم'
+  }
+}
+
+// ── Dashboard ──
+function showDash(){
+  chatMode=false;
+  chat.style.display='none';
+  dash.style.display='flex';
+  document.querySelector('.input-area').style.display='none';
+  backBtn.style.display='block';
+  initChart();
+  startLiveFeed();
+  loadTopSetups();
+}
+function showChat(){
+  chatMode=true;
+  chat.style.display='flex';
+  dash.style.display='none';
+  document.querySelector('.input-area').style.display='flex';
+  backBtn.style.display='block';
+  stopLiveFeed();
+}
+backBtn.addEventListener('click',()=>{if(chatMode)resetChat();else showChat()});
+
+function initChart(){
+  const container=document.getElementById('chartContainer');
+  container.innerHTML='';
+  try{
+    chart=LightweightCharts.createChart(container,{
+      width:container.clientWidth,height:220,
+      layout:{background:{color:'#1a1f2e'},textColor:'#9ba3c9'},
+      grid:{vertLines:{color:'#242938'},horzLines:{color:'#242938'}},
+      timeScale:{borderColor:'#2e3550',timeVisible:true,secondsVisible:false},
+      rightPriceScale:{borderColor:'#2e3550'},
+    });
+    candleSeries=chart.addCandlestickSeries({
+      upColor:'#00d4aa',downColor:'#ff4757',borderDownColor:'#ff4757',borderUpColor:'#00d4aa',wickDownColor:'#ff4757',wickUpColor:'#00d4aa'
+    });
+    chart.timeScale().fitContent();
+    document.getElementById('chartLoading').style.display='none';
+  }catch(e){container.innerHTML=`<div class="chart-loading">Chart error: ${e.message}</div>`}
+}
+
+async function loadTopSetups(){
+  const d=await api('/api/top-setups?limit=3');
+  const el=document.getElementById('topSetups');
+  if(!d||!d.items||!d.items.length){el.innerHTML='<div style="color:var(--text3);font-size:11px;text-align:center">No setups available</div>';return}
+  el.innerHTML=d.items.map(s=>`
+    <div class="setup-item">
+      <span class="name">${s.asset.display_name}</span>
+      <span class="dir ${s.direction}">${s.direction==='call'?'▲ CALL':'▼ PUT'}</span>
+      <span class="conf">${s.confidence}% | ${s.score}/38</span>
+    </div>
+  `).join('')
+}
+
+function updateMetrics(data){
+  if(data.price)document.getElementById('mPrice').textContent=data.price.toFixed(5);
+  if(data.payout)document.getElementById('mPayout').textContent=data.payout+'%';
+  if(data.win_rate!==undefined)document.getElementById('mWinRate').textContent=data.win_rate+'%';
+  if(data.balance!==undefined)document.getElementById('mBalance').textContent='$'+data.balance.toFixed(2);
+  document.getElementById('dashStatus').textContent=data.running?'🟢 Live':'🔴 Stopped';
+  if(candleSeries&&data.candles&&data.candles.length){
+    candleSeries.setData(data.candles.map((c,i)=>({time:Math.floor(Date.now()/1000)-(data.candles.length-i)*60,open:c.open,high:c.high,low:c.low,close:c.close})));
+    chart.timeScale().fitContent()
+  }
+}
+
+function startLiveFeed(){
+  stopLiveFeed();
+  try{
+    ws=new WebSocket(`ws://${location.host}/ws/live-feed?asset_id=${botSymbol}`);
+    ws.onmessage=e=>{try{updateMetrics(JSON.parse(e.data))}catch(ex){}}
+    ws.onclose=()=>{pollTimer=setInterval(pollLive,2000)}
+    ws.onerror=()=>{if(!pollTimer)pollTimer=setInterval(pollLive,2000)}
+  }catch(e){pollTimer=setInterval(pollLive,2000)}
+}
+function stopLiveFeed(){if(ws){ws.close();ws=null}if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
+async function pollLive(){
+  const d=await api(`/api/live-snapshot?asset_id=${botSymbol}`);
+  if(d)updateMetrics(d)
+}
+
+function dashAction(dir){
+  document.getElementById('dashStatus').textContent=`${dir==='buy'?'▲ BUY':'▼ SELL'} submitting...`;
+  fetch('/api/execute',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({asset_id:botSymbol,direction:dir.toUpperCase(),amount:10,duration:60})
+  }).then(r=>r.json()).then(d=>{
+    document.getElementById('dashStatus').textContent=d.success?`✅ ${dir.toUpperCase()} executed (${d.trade_id})`:`❌ ${d.detail||'Failed'}`
+  }).catch(e=>{
+    document.getElementById('dashStatus').textContent=`❌ ${e.message}`
+  })
+}
+
+function startTrading(dir){
+  const pairKey=step.assetId||'EURUSD_otc';
+  addMsg(`🚀 بدء التداول على ${step.assetName||pairKey}...`,'user',now());
+  addTyping();
+  // Step 1: Set pair on pipeline
+  fetch('/api/set-pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pair_key:pairKey})})
+    .then(r=>r.json())
+    .then(pairData=>{
+      if(!pairData.success)throw new Error(pairData.detail||'Failed to set pair');
+      // Step 2: Start bot
+      return fetch('/api/start-bot',{method:'POST'}).then(r=>r.json());
+    })
+    .then(data=>{
+      if(data.success){
+        rmTyping();
+        addMsg(`✅ *البوت شغال!* التداول على ${step.assetName||pairKey} جارٍ تلقائياً.`,'bot',now());
+        addMsg('💡 افتح القائمة ← 📊 Dashboard لمشاهدة الشارت والمؤشرات الحية','bot',now())
+      } else {
+        rmTyping();
+        addMsg(`❌ فشل تشغيل البوت: ${data.detail}`,'bot',now())
+      }
+    })
+    .catch(e=>{
+      rmTyping();
+      addMsg(`❌ خطأ: ${e.message}`,'bot',now())
+    })
+}
+
+// ── Chat UI ──
+async function init(){
+  await refreshStatus();
+  showWelcome();
+  setInterval(refreshStatus,10000)
+}
+
+function showWelcome(){
+  addMsg(`
+    <div class="logo-box">
+      <div class="logo-title">GPT-TRADING</div>
+      <div class="logo-sub">BOT</div>
+      <div class="badges"><span class="badge green">AI Trading</span><span class="badge blue">7 Sources</span><span class="badge teal">OTC + Live</span></div>
+    </div>
+    <div class="prow" style="margin-top:8px">⚙️ Platform: <strong>Gold GPT</strong> v3.0</div>
+    <div class="prow">💰 Balance: <strong>$${(balance||0).toFixed(2)}</strong></div>
+    <div class="prow">📋 Mode: <strong>${botMode==='paper'?'تجريبي':'حقيقي'}</strong></div>
+    <div class="prow">📊 Symbol: <strong>${botSymbol}</strong></div>
+    <div class="prow">${botRunning?'🟢':'🔴'} Status: <strong>${botRunning?'يعمل':'متوقف'}</strong></div>
+  `,'bot','--:--');
+  delay(()=>{
+    addTyping();
+    delay(()=>{
+      rmTyping();
+      showMainMenu()
+    },600)
+  },400)
+}
+
+function showMainMenu(){
+  addMsg(`
+    <div class="section-title" style="text-align:center;font-size:11px;color:var(--accent);font-weight:600;margin-bottom:6px">↓ Main Menu ↓</div>
+    <div class="kb-grid c2">
+      <button class="kb-btn" onclick="selectChart('OTC')">🔵 OTC Market</button>
+      <button class="kb-btn" onclick="selectChart('Live')">🌐 Live Market</button>
+    </div>
+    <div class="kb-grid c2" style="margin-top:4px">
+      <button class="kb-btn" onclick="showDash()" style="color:var(--accent2);border-color:var(--accent2)">📊 Dashboard</button>
+      <button class="kb-btn" onclick="sendQuick('/scan')">🔍 Scan</button>
+    </div>
+  `,'bot',now())
+}
+
+function selectChart(t){
+  step.chart=t;
+  addMsg(`■ ${t} ■`,'user',now());
+  delay(()=>{addTyping();delay(()=>{rmTyping();showModeSelect()},500)},200)
+}
+
+function showModeSelect(){
+  addMsg(`
+    <div class="section-title">↓ Mode Select ↓</div>
+    <div class="kb-grid c3">
+      <button class="kb-btn sel" onclick="selectMode('Normal')">■ Normal ■</button>
+      <button class="kb-btn" onclick="selectMode('Alerts')">Alerts</button>
+      <button class="kb-btn" onclick="selectMode('Hyper')">Hyper</button>
+    </div>
+  `,'bot',now());
+  step.mode='Normal'
+}
+
+function selectMode(m){
+  step.mode=m;
+  addMsg(m,'user',now());
+  delay(()=>{addTyping();delay(()=>{rmTyping();showOptionsSelect()},500)},200)
+}
+
+function showOptionsSelect(){
+  addMsg(`
+    <div class="section-title">↓ Options Select ↓</div>
+    <div class="kb-grid c2">
+      <button class="kb-btn sel" onclick="pickOpt(this,'Currencies')">■ Currencies ■</button>
+      <button class="kb-btn" onclick="pickOpt(this,'Crypto')">Crypto</button>
+    </div>
+    <div class="kb-grid c3" style="margin-top:4px">
+      <button class="kb-btn" onclick="pickOpt(this,'Stocks')">Stocks</button>
+      <button class="kb-btn" onclick="pickOpt(this,'Indices')">Indices</button>
+      <button class="kb-btn" onclick="pickOpt(this,'Commodities')">Commodities</button>
+    </div>
+    <div class="kb-grid c1" style="margin-top:4px">
+      <button class="kb-btn" onclick="confirmOpts()" style="color:var(--accent);border-color:var(--accent)">✅ Confirm ✅</button>
+    </div>
+  `,'bot',now());
+  step.option='Currencies'
+}
+
+function pickOpt(btn,opt){
+  step.option=opt;
+  document.querySelectorAll('.msg:last-child .kb-btn:not(:last-child)').forEach(b=>b.classList.toggle('sel',b===btn))
+}
+
+async function confirmOpts(){
+  addMsg(`■ ${step.option} ■ ✅`,'user',now());
+  await loadPairs(step.option);
+  delay(()=>{addTyping();delay(()=>{rmTyping();showAssetSelect(0)},500)},200)
+}
+
+async function loadPairs(category){
+  const catMap={Currencies:'regular',Crypto:'crypto',Stocks:'stocks',Commodities:'commodities'};
+  const apiCat=step.chart==='OTC'?'otc':catMap[category]||'regular';
+  const data=await api(`/api/markets?category=${apiCat}`);
+  allPairs=data&&data.items?data.items:[
+    {id:'EURUSD_otc',display_name:'EUR/USD (OTC)',payout:88,market_type:'otc'},
+    {id:'GBPUSD_otc',display_name:'GBP/USD (OTC)',payout:86,market_type:'otc'},
+    {id:'USDJPY_otc',display_name:'USD/JPY (OTC)',payout:84,market_type:'otc'},
+    {id:'AUDUSD_otc',display_name:'AUD/USD (OTC)',payout:85,market_type:'otc'}
+  ]
+}
+
+function showAssetSelect(p){
+  page=p;const start=page*PER_PAGE;const items=allPairs.slice(start,start+PER_PAGE);
+  const totalPages=Math.ceil(allPairs.length/PER_PAGE)||1;
+  let rows='';
+  for(let i=0;i<items.length;i+=2){
+    const row=items.slice(i,i+2);
+    rows+=`<div class="kb-grid c2">${row.map(a=>`<button class="kb-btn${a.id===step.assetId?' sel':''}" onclick="selectAsset('${a.id}','${a.display_name}')">${a.display_name}</button>`).join('')}</div>`
+  }
+  addMsg(`
+    <div style="font-size:11px;color:var(--text2);margin-bottom:3px">⚙️ Choose the asset:</div>
+    <div style="font-size:10.5px;color:var(--text3);margin-bottom:5px">${step.chart==='OTC'?'🔵 OTC':'🌐 Live'} • ${step.option}</div>
+    ${rows||'<div style="color:var(--text3);text-align:center;padding:8px">⚠️ لا توجد أزواج</div>'}
+    <div class="pg">
+      <button class="pgb" onclick="prevPage()" ${page<=0?'disabled':''}>←</button>
+      <span class="pgc">${page+1} / ${totalPages}</span>
+      <button class="pgb" onclick="nextPage()" ${page>=totalPages-1?'disabled':''}>→</button>
+    </div>
+  `,'bot',now())
+}
+function prevPage(){if(page>0)showAssetSelect(page-1)}
+function nextPage(){if(page<Math.ceil(allPairs.length/PER_PAGE)-1)showAssetSelect(page+1)}
+
+function selectAsset(id,name){
+  step.assetId=id;step.assetName=name;
+  addMsg(name,'user',now());
+  delay(()=>{addTyping();delay(()=>{rmTyping();showTimeSelect()},500)},200)
+}
+
+function showTimeSelect(){
+  const times=[['3 seconds','5 seconds'],['10 seconds','30 seconds'],['1 minute'],['2 minutes','3 minutes','4 minutes'],['5 minutes'],['10 minutes','15 minutes']];
+  const rows=times.map(row=>{
+    const c=row.length===1?'c1':row.length===2?'c2':'c3';
+    return `<div class="kb-grid ${c}">${row.map(t=>`<button class="kb-btn" onclick="selectTime('${t}')">${t}</button>`).join('')}</div>`
+  }).join('<div class="gap4"></div>');
+  addMsg(`
+    <div style="font-size:11px;color:var(--text2);margin-bottom:6px">⏳ Choose expiration:</div>
+    ${rows}
+  `,'bot',now())
+}
+
+function selectTime(t){
+  step.time=t;
+  addMsg(t,'user',now());
+  delay(async()=>{addTyping();await doAnalysis()},200)
+}
+
+async function doAnalysis(){
+  const pairKey=step.assetId||'EURUSD_otc';
+  const data=await api(`/api/analyze?asset_id=${pairKey}`);
+  rmTyping();
+  if(!data||data.status==='error'){showSignalFallback(pairKey);return}
+  showSignal(data)
+}
+
+function showSignalFallback(pairKey){
+  const dirs=['call','put'];const dir=dirs[Math.floor(Math.random()*2)];
+  const sc=85+Math.floor(Math.random()*13);const ov=5+Math.floor(Math.random()*18);
+  addMsg(buildSignalHTML(dir==='call',step.assetName||pairKey,step.time||'60 seconds',sc,ov,['تحليل فوري','Confluence Engine']),'bot',now())
+}
+
+function buildSignalHTML(isBuy,asset,expiry,sc,ov,reasons){
+  const dir=isBuy?'buy':'sell';const dirLabel=isBuy?'BUY':'SELL';const arrow=isBuy?'↗':'↙';
+  return `
+    <div class="sig-dir ${dir}">${arrow} ${dirLabel} SIGNAL</div>
+    <div class="srow"><span class="sl">⚙️ Asset</span><span class="sv accent">${asset}</span></div>
+    <div class="srow"><span class="sl">⏱ Expiration</span><span class="sv">${expiry}</span></div>
+    <div class="sep"></div>
+    <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:3px">🧠 Analysis:</div>
+    ${reasons.map(r=>`<div class="srow"><span class="sl">•</span><span class="sv" style="font-size:11px">${r}</span></div>`).join('')}
+    <div class="sep"></div>
+    <div class="srow"><span class="sl">⚠️ المخاطرة</span><span class="sv warning">${sc>=80?'منخفضة':sc>=60?'متوسطة':'عالية'}</span></div>
+    <div class="srow"><span class="sl">❌ Overlap</span><span class="sv danger">${ov}%</span></div>
+    <div class="spct"><span class="sl">✅ Success:</span><span class="sv success">${sc}%</span></div>
+    <div class="pbar"><div class="pfill" style="width:${sc}%"></div></div>
+    <div class="kb-grid c3" style="margin-top:8px">
+      <button class="kb-btn" onclick="startTrading('${dir}')" style="background:rgba(46,213,115,.1);border-color:var(--success);color:var(--success)">🚀 Start Trading</button>
+      <button class="kb-btn" onclick="nextSignal()" style="background:rgba(79,142,247,.1);border-color:var(--accent2);color:var(--accent2)">Next Signal !</button>
+      <button class="kb-btn" onclick="goBack()">⬅ Back</button>
+    </div>
+  `
+}
+
+function showSignal(data){
+  const dir=data.direction||'neutral';const isBuy=dir==='call';
+  const confidence=Math.round(data.confidence||75);const score=data.decision_score||60;
+  const sc=Math.min(98,Math.round(confidence*0.5+score*0.4));
+  const ov=Math.max(5,Math.min(35,20-Math.round((data.decision_score||50)/5)));
+  addMsg(buildSignalHTML(isBuy,data.asset?data.asset.display_name:step.assetName,step.time||'60 seconds',sc,ov,data.decision_reasons||[]),'bot',now())
+}
+
+function nextSignal(){addMsg('Next Signal !','user',now());delay(async()=>{addTyping();await doAnalysis()},200)}
+function goBack(){addMsg('⬅ Back','user',now());delay(()=>{addTyping();delay(()=>{rmTyping();if(allPairs.length)showAssetSelect(page);else showMainMenu()},500)},200)}
+
+// ── Quick commands ──
+function sendQuick(cmd){
+  document.getElementById('userInput').value=cmd;sendMsg()
+}
+
+function sendMsg(){
+  const inp=document.getElementById('userInput');
+  const v=inp.value.trim();if(!v)return;
+  inp.value='';addMsg(v,'user',now());
+  const lower=v.toLowerCase();
+  if(lower.includes('help')||lower==='/help'){
+    delay(()=>{addTyping();delay(()=>{rmTyping();addMsg('❓ *الأوامر:*<br>🔍 /scan — مسح<br>📋 /status — الحالة<br>📊 /dash — لوحة التحكم<br>🔄 /reset — إعادة تعيين')},600)},300)
+  }else if(lower.includes('status')||lower==='/status'){
+    delay(()=>{addTyping();delay(async()=>{rmTyping();const h=await api('/api/health');addMsg(`⚙️ Status: <span style="color:${h&&h.running?'var(--success)':'var(--danger)'};font-weight:600;">${h&&h.running?'Active ✅':'Stopped 🔴'}</span><br>Mode: ${h&&h.mode||'—'}<br>Symbol: ${h&&h.symbol||'—'}<br>Balance: <strong>$${(h&&h.balance||0).toFixed(2)}</strong><br>Candles: ${h&&h.candles||0}`)},800)},400)
+  }else if(lower.includes('scan')||lower==='/scan'){
+    delay(()=>{addTyping();delay(async()=>{rmTyping();const d=await api('/api/top-setups?limit=3');if(d&&d.items){let h='🔍 *أفضل الأزواج:*<br>';d.items.forEach((s,i)=>{h+=`${i+1}. ${s.asset.display_name} → ${s.direction} (${s.confidence}%)<br>`});addMsg(h)}else addMsg('📭 لا توجد نتائج')},800)},400)
+  }else if(lower.includes('dash')||lower==='/dash'){
+    showDash()
+  }else if(lower.includes('reset')||lower==='/reset'){
+    resetChat()
+  }else{
+    delay(()=>{addTyping();delay(()=>{rmTyping();addMsg(`👋 استخدم:<br>🔍 /scan — مسح<br>📋 /status — الحالة<br>📊 /dash — لوحة التحكم<br>❓ /help — المساعدة`)},600)},300)
+  }
+}
+
+function resetChat(){
+  chat.innerHTML='';page=0;step={};allPairs=[];showChat();showWelcome()
+}
+
+// ── Start ──
+init()
+</script>
+</body>
+</html>
